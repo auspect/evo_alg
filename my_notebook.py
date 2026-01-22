@@ -7,6 +7,14 @@ app = marimo.App(width="medium")
 @app.cell
 def _(mo):
     mo.md(r"""
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/auspect/evo_alg/blob/master/my_notebook.py)
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
     # Introduction aux algorithmes évolutionnaires
 
     On va regarder comment optimiser une fonction objectif avec des algorithmes d'optimisation globaux (et plus ou moins agnostiques) :
