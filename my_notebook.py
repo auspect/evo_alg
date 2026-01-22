@@ -1,10 +1,10 @@
 import marimo
 
 __generated_with = "0.19.4"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", auto_download=["ipynb"])
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/auspect/evo_alg/blob/master/my_notebook.py)
@@ -12,7 +12,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     # Introduction aux algorithmes évolutionnaires
@@ -27,7 +27,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Packages
@@ -47,12 +47,12 @@ def _():
     from typing import TypeAlias, Callable
 
     # Thème clair pour les graphiques Altair
-    alt.themes.enable("fivethirtyeight")
+    alt.themes.enable("googlecharts")
 
     return Callable, TypeAlias, alt, dataclass, kendalltau, mo, norm, np, pd
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Paramètres
@@ -69,7 +69,7 @@ def _():
     return N_NOTES, N_SAMPLES, SEED
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Simuler des données
@@ -133,7 +133,7 @@ def _(alt, df):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Modélisation
@@ -155,7 +155,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ### Préparation
@@ -163,7 +163,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     Quelques fonctions utiles :
@@ -206,7 +206,7 @@ def _(kendalltau, scores, y):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ### Discrétisation des variables
@@ -229,7 +229,7 @@ def _(df, pd):
     return (features_discretized,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ### Dummies
@@ -261,7 +261,7 @@ def _(mo):
 
     A noter qu'ici, on fait `drop_first=True` pour retirer 1 modalité par variable lors de la construction des dummies.
 
-    En réalité ce n'est pas nécessaire dans le cas présent, puisque notre algorithme peut converger avec ou sans, et dans tous les cas, on pourra construire la grille de score. Mais comme c'est souvent requis (dès lors que la multi-colinéarité empêche d'inverser une matrice par ex), on le fait quand même, ça réduit même le nombre de coefficients à trouver (les coefficients retirés seront donc forcés à 0).
+    En réalité ce n'est pas nécessaire dans le cas présent, puisque notre algorithme peut converger avec ou sans, et dans tous les cas, on pourra construire la grille de score. Mais comme c'est souvent requis (dès lors que la multi-colinéarité empêche d'inverser une matrice par ex), on le fait quand même, et ça réduit même le nombre de coefficients à trouver (les coefficients retirés seront donc forcés à 0).
     ///
     """)
     return
@@ -279,7 +279,7 @@ def _(features_discretized, pd):
     return (features_dummies,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ### Algos
@@ -287,7 +287,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     #### Bornes
@@ -357,7 +357,7 @@ def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
     return Bounds, coeffs_bounds
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     #### Stats sur la perf de l'algo
@@ -392,7 +392,7 @@ def _(alt, dataclass, pd):
             avg_fitness = sum(current_fitnesses) / len(current_fitnesses)
             self.avg_fitness_by_gen.append(avg_fitness)
             self.best_fitness_by_gen.append(max(current_fitnesses))
-    
+
         def update(self, best_fitness, current_fitnesses):
             """Mettre à jour les performances"""
             self.update_best_fitness(best_fitness)
@@ -428,7 +428,7 @@ def _(alt, dataclass, pd):
     return (PerformanceAlgoTracker,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     #### Individus
@@ -450,7 +450,7 @@ def _(Bounds, np):
         def __init__(self, w: np.ndarray):
             self.w = w
             self.fitness = None
-    
+
         @classmethod
         def random(cls, n_coeffs: int, bounds: Bounds, rng: np.random.Generator) -> "Individual":
             """Créer un individu avec des coefficients aléatoires"""
@@ -473,7 +473,7 @@ def _(Bounds, np):
     return (Individual,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     #### Squelette des algos
