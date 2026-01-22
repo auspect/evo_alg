@@ -9,8 +9,5 @@ wheels/
 # Virtual environments
 .venv
 
-# Marimo files
-__marimo__/
-
 # Python version
 .python-version

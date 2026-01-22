@@ -376,6 +376,7 @@ def _(alt, dataclass, pd):
         best_fitness: float = float("-inf")
         avg_fitness_by_gen: list[float] = None
         best_fitness_by_gen: list[float] = None
+        title: str = "Performance de l'algorithme évolutionnaire au fil des générations"
 
         def __post_init__(self):
             self.avg_fitness_by_gen = []
@@ -413,13 +414,13 @@ def _(alt, dataclass, pd):
                 .mark_line(point=True)
                 .encode(
                     x="Génération:Q",
-                    y="Fitness:Q",
+                    y=alt.Y("Fitness:Q").scale(domain=(-1, 1)),
                     color="Metric:N"
                 )
                 .properties(
-                    title="Evolution des performances de l'algorithme évolutionnaire au fil des générations",
+                    title=self.title,
                     width=600,
-                    height=400
+                    height=400,
                 )
             )
             return chart
@@ -504,7 +505,9 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
             self.bounds = bounds
             self.n_coeffs = len(self.bounds)
             self.population = self.init_pop()
-            self.track_perf = PerformanceAlgoTracker()
+            self.track_perf = PerformanceAlgoTracker(
+                title=f"Performance de l'algorithme {self.__class__.__name__} au fil des générations"
+            )
 
         def init_pop(self) -> list[Individual]:
             """Initialiser la population"""
