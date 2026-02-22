@@ -1,13 +1,17 @@
 import marimo
 
-__generated_with = "0.19.4"
-app = marimo.App(width="medium", auto_download=["ipynb"])
+__generated_with = "0.20.1"
+app = marimo.App(
+    width="medium",
+    css_file="/usr/local/_marimo/custom.css",
+    auto_download=["html"],
+)
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/auspect/evo_alg/blob/master/my_notebook.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/auspect/evo_alg/blob/master/intro_algos_evolutionnaires.py)
     """)
     return
 
@@ -41,14 +45,12 @@ def _():
     import altair as alt
     import numpy as np
     import pandas as pd
-    from sklearn.metrics import cohen_kappa_score
     from scipy.stats import kendalltau, norm
     from dataclasses import dataclass
-    from typing import TypeAlias, Callable
+    from typing import TypeAlias, Callable, TYPE_CHECKING
 
     # Thème clair pour les graphiques Altair
-    alt.themes.enable("googlecharts")
-
+    alt.theme.enable("googlecharts")
     return Callable, TypeAlias, alt, dataclass, kendalltau, mo, norm, np, pd
 
 
@@ -65,7 +67,6 @@ def _():
     N_SAMPLES = 100
     N_NOTES = 10
     SEED = 42
-
     return N_NOTES, N_SAMPLES, SEED
 
 
@@ -91,13 +92,14 @@ def _(N_NOTES, N_SAMPLES, SEED, norm, np, pd):
     quantiles_gauss = norm.cdf(np.linspace(-2.5, 2.5, N_NOTES + 1))
     quantiles_gauss[0] = 0.0
     quantiles_gauss[-1] = 1.0
-    print(f"Supposons que les notes sont réparties selon ces quantiles gaussiens : {quantiles_gauss}")
+    print(
+        f"Supposons que les notes sont réparties selon ces quantiles gaussiens : {quantiles_gauss}"
+    )
     y = pd.qcut(scores, q=quantiles_gauss, labels=False) + 1
 
     df = pd.DataFrame(X, columns=["x0", "x1"])
     df["y"] = y
     df
-
     return df, scores, y
 
 
@@ -110,26 +112,23 @@ def _(alt, df):
         .encode(
             x=alt.X(field="x0", type="quantitative"),
             y=alt.Y(field="x1", type="quantitative"),
-            color=alt.Color(field="y").scale(scheme="pinkyellowgreen", reverse=True, type="ordinal"),
+            color=alt.Color(field="y").scale(
+                scheme="pinkyellowgreen", reverse=True, type="ordinal"
+            ),
             tooltip=[
                 alt.Tooltip(field="x0", format=",.2f"),
                 alt.Tooltip(field="x1", format=",.2f"),
-                alt.Tooltip(field="y", format=",.0f")
-            ]
+                alt.Tooltip(field="y", format=",.0f"),
+            ],
         )
         .properties(
             title="Scatterplot",
             height=290,
             width="container",
-            config={
-                "axis": {
-                    "grid": True
-                }
-            }
+            config={"axis": {"grid": True}},
         )
     )
     _chart
-
     return
 
 
@@ -181,9 +180,11 @@ def _(kendalltau, np):
         Calculer la combinaison linéaire des variables avec les coefficients w.
         C'est un score brute qui a vocation à être discrétisé ensuite en notes
         """
-        return X @ w
+        return X @ w  # (n_obs, n_var=2), w=n_var(=2)
 
-    def objective(w: np.ndarray, X: np.ndarray, y_true: np.ndarray, **kwargs) -> float:
+    def objective(
+        w: np.ndarray, X: np.ndarray, y_true: np.ndarray, **kwargs
+    ) -> float:
         """
         Fonction objectif à minimiser : kendall tau-b entre les notes vraies
         et les scores bruts (continus)
@@ -201,8 +202,9 @@ def _(kendalltau, scores, y):
     # Rappel : les notes ont été générées à partir du score simulé
     # (on est pas aussi chanceux dans la vraie vie 🙂)
     _tau_b, _ = kendalltau(scores, y, variant="b")
-    print(f"Tau-b entre score simulé et notes issues du score simulé : {_tau_b:.2%}")
-
+    print(
+        f"Tau-b entre score simulé et notes issues du score simulé : {_tau_b:.2%}"
+    )
     return
 
 
@@ -220,12 +222,13 @@ def _(mo):
 
 @app.cell
 def _(df, pd):
-    features_discretized = pd.DataFrame({
-        "discrete_x0": pd.qcut(df["x0"], q=4, labels=["a", "b", "c", "d"]),
-        "discrete_x1": pd.qcut(df["x1"], q=4, labels=["e", "f", "g", "h"]),
-    })
+    features_discretized = pd.DataFrame(
+        {
+            "discrete_x0": pd.qcut(df["x0"], q=4, labels=["a", "b", "c", "d"]),
+            "discrete_x1": pd.qcut(df["x1"], q=4, labels=["e", "f", "g", "h"]),
+        }
+    )
     features_discretized
-
     return (features_discretized,)
 
 
@@ -270,12 +273,10 @@ def _(mo):
 @app.cell
 def _(features_discretized, pd):
     features_dummies = 1 * pd.get_dummies(
-        features_discretized.astype(str),
-        drop_first=True
+        features_discretized.astype(str), drop_first=True
     )
 
     features_dummies
-
     return (features_dummies,)
 
 
@@ -306,17 +307,18 @@ def _():
     BORNE_FINALE = 5.0
     N_GENERATIONS = 50
     POPULATION_SIZE = 100
-
     return BORNE_FINALE, BORNE_INITIALE, N_GENERATIONS, POPULATION_SIZE
 
 
 @app.cell
 def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
     # Bornes pour les coefficients
-    bound_type: TypeAlias = tuple[float, float]
-    bounds_type: TypeAlias = list[bound_type]
-    infs_type: TypeAlias = list[float]
-    sups_type: TypeAlias = list[float]
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        bounds_type: TypeAlias = list[tuple[float, float]]
+        infs_type: TypeAlias = list[float]
+        sups_type: TypeAlias = list[float]
 
     @dataclass
     class Bound:
@@ -329,14 +331,15 @@ def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
     @dataclass
     class Bounds:
         bounds: list[Bound]
-        _cache_as_list_of_tuples: bounds_type = None
-        _cache_as_list_inf_and_sup: tuple[infs_type, sups_type] = None
-
+        _cache_as_list_of_tuples: list[tuple[float, float]] = None
+        _cache_as_list_inf_and_sup: tuple[list[float], list[float]] = None
 
         def as_list_of_tuples(self) -> bounds_type:
             """Convertir les bornes en liste de tuples"""
             if self._cache_as_list_of_tuples is None:
-                self._cache_as_list_of_tuples = [b.as_tuple() for b in self.bounds]
+                self._cache_as_list_of_tuples = [
+                    b.as_tuple() for b in self.bounds
+                ]
             return self._cache_as_list_of_tuples
 
         def as_list_inf_and_sup(self) -> tuple[infs_type, sups_type]:
@@ -346,14 +349,17 @@ def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
                 highs = [b.high for b in self.bounds]
                 self._cache_as_list_inf_and_sup = (lows, highs)
             return self._cache_as_list_inf_and_sup
+
         def __len__(self) -> int:
             return len(self.bounds)
 
-    coeffs_bounds = Bounds([
-        Bound(BORNE_INITIALE, BORNE_FINALE) for _ in range(features_dummies.shape[1])
-    ])
+    coeffs_bounds = Bounds(
+        [
+            Bound(BORNE_INITIALE, BORNE_FINALE)
+            for _ in range(features_dummies.shape[1])
+        ]
+    )
     coeffs_bounds
-
     return Bounds, coeffs_bounds
 
 
@@ -376,7 +382,9 @@ def _(alt, dataclass, pd):
         best_fitness: float = float("-inf")
         avg_fitness_by_gen: list[float] = None
         best_fitness_by_gen: list[float] = None
-        title: str = "Performance de l'algorithme évolutionnaire au fil des générations"
+        title: str = (
+            "Performance de l'algorithme évolutionnaire au fil des générations"
+        )
 
         def __post_init__(self):
             self.avg_fitness_by_gen = []
@@ -400,22 +408,26 @@ def _(alt, dataclass, pd):
 
         def plot(self):
             """Tracer l'évolution des performances"""
-            df_perf = pd.DataFrame({
-                "Génération": list(range(1, len(self.avg_fitness_by_gen) + 1)),
-                "Fitness moyen": self.avg_fitness_by_gen,
-                "Meilleure fitness": self.best_fitness_by_gen
-            })
+            df_perf = pd.DataFrame(
+                {
+                    "Génération": list(
+                        range(1, len(self.avg_fitness_by_gen) + 1)
+                    ),
+                    "Fitness moyen": self.avg_fitness_by_gen,
+                    "Meilleure fitness": self.best_fitness_by_gen,
+                }
+            )
             chart = (
                 alt.Chart(df_perf)
                 .transform_fold(
                     fold=["Fitness moyen", "Meilleure fitness"],
-                    as_=["Metric", "Fitness"]
+                    as_=["Metric", "Fitness"],
                 )
                 .mark_line(point=True)
                 .encode(
                     x="Génération:Q",
                     y=alt.Y("Fitness:Q").scale(domain=(-1, 1)),
-                    color="Metric:N"
+                    color="Metric:N",
                 )
                 .properties(
                     title=self.title,
@@ -452,24 +464,51 @@ def _(Bounds, np):
             self.fitness = None
 
         @classmethod
-        def random(cls, n_coeffs: int, bounds: Bounds, rng: np.random.Generator) -> "Individual":
+        def random(
+            cls, n_coeffs: int, bounds: Bounds, rng: np.random.Generator
+        ) -> "Individual":
             """Créer un individu avec des coefficients aléatoires"""
             lows, highs = bounds.as_list_inf_and_sup()
             w = rng.uniform(lows, highs, size=n_coeffs)
             return cls(w)
+
         def clip_individual(self, bounds: Bounds):
             """Clipper les coefficients de l'individu dans les bornes"""
             lows, highs = bounds.as_list_inf_and_sup()
             self.w = np.clip(self.w, lows, highs)
+
         def evaluate(self, fitness_func, X: np.ndarray, y: np.ndarray):
             """Évaluer la fitness de l'individu"""
             if self.fitness is None:
                 self.fitness = fitness_func(self.w, X, y)
             return self.fitness
 
+        def __sub__(self, other: "Individual") -> "Individual":
+            """
+            Implémenter la soustraction entre 2 individus,
+            utile pour l'évolution différentielle
+            """
+            new_w = self.w - other.w
+            return Individual(new_w)
+
+        def __add__(self, other: "Individual") -> "Individual":
+            """
+            Implémenter l'addition entre 2 individus
+            """
+            new_w = self.w + other.w
+            return Individual(new_w)
+
+        def __mul__(self, coeff: float) -> "Individual":
+            """Implémenter la multiplication entre 2 individus"""
+            new_w = self.w * coeff
+            return Individual(new_w)
+
+        def __rmul__(self, coeff: float) -> "Individual":
+            """Implémenter la rmultiplication entre 2 individus"""
+            return self.__mul__(coeff)
+
     # Population type alias (liste d'individus)
     Population = list[Individual]
-
     return (Individual,)
 
 
@@ -489,6 +528,7 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
     @dataclass
     class EvolutionaryConfigTemplate:
         """Configuration pour les algos évolutionnaires"""
+
         population_size: int
         n_generations: int
         seed: int = 42
@@ -497,7 +537,12 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
     class EvolutionaryTemplate:
         """Template pour les algos évolutionnaires"""
 
-        def __init__(self, objective: Callable, config: EvolutionaryConfigTemplate, bounds: Bounds):
+        def __init__(
+            self,
+            objective: Callable,
+            config: EvolutionaryConfigTemplate,
+            bounds: Bounds,
+        ):
             """Initialiser l'algorithme évolutionnaire"""
             self.objective = objective
             self.config = config
@@ -512,7 +557,9 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
         def init_pop(self) -> list[Individual]:
             """Initialiser la population"""
             population = [
-                Individual.random(n_coeffs=len(self.bounds), bounds=self.bounds, rng=self.rng)
+                Individual.random(
+                    n_coeffs=len(self.bounds), bounds=self.bounds, rng=self.rng
+                )
                 for _ in range(self.config.population_size)
             ]
             return population
@@ -530,7 +577,9 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
 
         def run_iter(self, X: np.ndarray, y: np.ndarray):
             """Une itération (itération=génération) de l'algorithme évolutionnaire"""
-            raise NotImplementedError("Cette méthode doit être implémentée dans les sous-classes")
+            raise NotImplementedError(
+                "Cette méthode doit être implémentée dans les sous-classes"
+            )
 
         def run(self, X: np.ndarray, y: np.ndarray, **kwargs):
             """Lancer l'algorithme évolutionnaire"""
@@ -543,7 +592,9 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
             ) as pb:
                 for gen in range(self.config.n_generations):
                     self.evaluate_population(X, y)
-                    pb.update(subtitle=f"Meilleure fitness pour l'instant : {self.track_perf.best_fitness:.2%}")
+                    pb.update(
+                        subtitle=f"Meilleure fitness pour l'instant : {self.track_perf.best_fitness:.2%}"
+                    )
                     if gen < self.config.n_generations - 1:
                         self.run_iter(X, y)
 
@@ -570,32 +621,42 @@ def _(
             """Lancer l'algorithme baseline pour une itération"""
             # On remplace la population par une nouvelle population aléatoire
             self.population = self.init_pop()
+
     # Exemple d'utilisation
     baseline_config = EvolutionaryConfigTemplate(
-        population_size=POPULATION_SIZE,
-        n_generations=N_GENERATIONS,
-        seed=SEED
+        population_size=POPULATION_SIZE, n_generations=N_GENERATIONS, seed=SEED
     )
     baseline_algo = BaselineEvolutionaryAlgo(
-        objective=objective,
-        config=baseline_config,
-        bounds=coeffs_bounds
+        objective=objective, config=baseline_config, bounds=coeffs_bounds
     )
     baseline_algo.run(features_dummies.values, y)
-
     return (baseline_algo,)
 
 
 @app.cell
 def _(baseline_algo):
     baseline_algo.track_perf.plot()
+    return
 
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Aucun progrès n'est observé dans cet algorithme purement aléatoire
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Algorithme génétique
+    """)
     return
 
 
 @app.cell
 def _(
-    Bounds,
     EvolutionaryConfigTemplate,
     EvolutionaryTemplate,
     Individual,
@@ -612,6 +673,7 @@ def _(
     @dataclass
     class GeneticAlgorithmConfig(EvolutionaryConfigTemplate):
         """Configuration spécifique pour l'algorithme génétique"""
+
         mutation_rate: float = 0.1
         tournament_size: int = 3
         elites_size: int = 2
@@ -619,23 +681,30 @@ def _(
     class GeneticAlgorithm(EvolutionaryTemplate):
         """Implémentation simple d'un algorithme génétique"""
 
-        def __init__(self, config: GeneticAlgorithmConfig, bounds: Bounds):
-            super().__init__(objective=objective, config=config, bounds=bounds)
-
         def tournament_selection(self) -> Individual:
             """Sélection par tournoi"""
-            participants_idx = self.rng.integers(0, len(self.population), size=self.config.tournament_size)
-            best_participant_idx = min(participants_idx) # la pop est déjà triée à ce stade (par fitness décroissante)
+            participants_idx = self.rng.integers(
+                0, len(self.population), size=self.config.tournament_size
+            )
+            # la pop est déjà triée à ce stade (par fitness décroissante),
+            # l'index min est donc le meilleur du tournoi
+            best_participant_idx = min(participants_idx)
             return self.population[best_participant_idx]
 
-        def create_child(self, parent1: Individual, parent2: Individual) -> Individual:
+        def create_child(
+            self, parent1: Individual, parent2: Individual
+        ) -> Individual:
             """Créer un enfant par crossover et mutation"""
             # Crossover (ici moyenne des coefficients, mais
             # plein de possibilités existent)
             child_w = (parent1.w + parent2.w) / 2
             # Mutation
-            mask = self.rng.binomial(1, self.config.mutation_rate, size=self.n_coeffs)
-            mutation_value = self.rng.uniform(*self.bounds.as_list_inf_and_sup(), size=self.n_coeffs)
+            mask = self.rng.binomial(
+                1, self.config.mutation_rate, size=self.n_coeffs
+            )
+            mutation_value = self.rng.uniform(
+                *self.bounds.as_list_inf_and_sup(), size=self.n_coeffs
+            )
             applied_mutation = mask * mutation_value
             child_w += applied_mutation
             # S'assurer que le coefficient reste dans les bornes
@@ -650,8 +719,10 @@ def _(
             # 2e étape : création de la nouvelle population
             new_population = []
             # Sélection des élites
-            sorted_population = sorted(self.population, key=lambda ind: ind.fitness, reverse=True)
-            new_population.extend(sorted_population[:self.config.elites_size])
+            sorted_population = sorted(
+                self.population, key=lambda ind: ind.fitness, reverse=True
+            )
+            new_population.extend(sorted_population[: self.config.elites_size])
             # Remplir le reste de la population
             while len(new_population) < self.config.population_size:
                 # Sélection par tournoi
@@ -668,21 +739,148 @@ def _(
         seed=SEED,
         mutation_rate=0.1,
         tournament_size=3,
-        elites_size=2
+        elites_size=2,
     )
     genetic_algo = GeneticAlgorithm(
-        config=genetic_config,
-        bounds=coeffs_bounds
+        objective=objective, config=genetic_config, bounds=coeffs_bounds
     )
     genetic_algo.run(features_dummies.values, y)
-
     return (genetic_algo,)
 
 
 @app.cell
 def _(genetic_algo):
     genetic_algo.track_perf.plot()
+    return
 
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    On constate une amélioration au fil des générations (les générations passées servent à améliorer les générations suivantes)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    #### Evolution différentielle
+
+    Le principe est toujours d'utiliser les itérations passées pour tenter de trouver de meilleurs candidats à l'itération suivante.
+
+    La création des nouveaux individus se fait selon une certaine stratégie. On implémente ici la stratégie **best1bin** pour créer de nouveaux individus : ces nouveaux individus sont évalués, puis conservés si ils font mieux que leurs prédécesseurs.
+
+    /// details | Stratégie d'évolution best1bin
+        type: info
+
+    - best : le vecteur à "muter" est celui de l'individu le plus performant (on part de ses caractéristiques, qu'on ajuste à l'aide d'autres individus). Une autre stratégie possible consiste à utiliser un vecteur aléatoire.
+    - 1 : le nombre de différences à ajouter au vecteur à muter (pondérées par un coefficient de mutation). En bref, si on fait 1 différence, on a besoin de deux individus, si on fait 2 différences, on a besoin de 4, etc... (Dans tous les cas, chaque caractéristique n'est altérée qu'en fonction de la probabilité de croisement)
+    - bin : croisement binomial (les caractéristiques du nouvel individu ne sont mutées qu'avec une probabilité définie par notre ˋcrossover_probˋ, et chaque caractéristique est traitée indépendamment). Il existe des alternatives (tirage "exp", où le croisement se fait, toujours aléatoirement, mais sur des caractéristiques consécutives en fonction de ˋcrossover_probˋ)
+
+    ///
+    """)
+    return
+
+
+@app.cell
+def _(
+    EvolutionaryConfigTemplate,
+    EvolutionaryTemplate,
+    Individual,
+    dataclass,
+    np,
+):
+    @dataclass
+    class DifferentialEvolutionConfig(EvolutionaryConfigTemplate):
+        crossover_prob: float = 0.7
+        f_interval: tuple[float, float] = (
+            0.3,
+            1.7,
+        )
+
+    class DifferentialEvolution(EvolutionaryTemplate):
+        def create_candidat(
+            self, best_indiv: Individual, indiv: Individual, random_f: float
+        ) -> Individual:
+            """Créer un individu candidat"""
+            # Prendre deux individus aléatoires
+            # On utilise la différence de leurs caractéristiques
+            # (d'où le nom : évolution "différentielle")
+            indiv1, indiv2 = self.rng.choice(
+                self.population, size=2, replace=False
+            )
+            indiv_mute = best_indiv + random_f * (indiv1 - indiv2)
+            # croisement (on ne prend pas toutes les caractéristiques de l'individu muté)
+            mask = self.rng.binomial(
+                p=self.config.crossover_prob, n=1, size=self.n_coeffs
+            ).astype(np.bool)
+            candidat = Individual(w=np.where(mask, indiv_mute.w, indiv.w))
+            candidat.clip_individual(self.bounds)
+            return candidat
+
+        def run_iter(self, X: np.ndarray, y: np.ndarray):
+            """Lancer une itération de l'évolution différentielle"""
+            # 1re étape : évaluer la population
+            self.evaluate_population(X, y)
+            # 2e étape : création de la nouvelle population
+            best_indiv = self.population[0]
+            new_pop = []
+            # Le coefficient de mutation est tiré à chaque itération dans l'intervalle spécifié
+            # (il pourrait également être figé)
+            random_f = self.rng.uniform(*self.config.f_interval)
+            for indiv in self.population:
+                candidat = self.create_candidat(
+                    best_indiv=best_indiv, indiv=indiv, random_f=random_f
+                )
+                candidat_fitness = candidat.evaluate(self.objective, X, y)
+                # Si ce candidat est meilleur que l'individu testé, on remplace par le candidat
+                if candidat_fitness > indiv.fitness:
+                    new_pop.append(candidat)
+                else:
+                    new_pop.append(indiv)
+            self.population = new_pop
+
+    return DifferentialEvolution, DifferentialEvolutionConfig
+
+
+@app.cell
+def _(
+    DifferentialEvolution,
+    DifferentialEvolutionConfig,
+    N_GENERATIONS,
+    POPULATION_SIZE,
+    SEED,
+    coeffs_bounds,
+    features_dummies,
+    objective,
+    y,
+):
+    de_config = DifferentialEvolutionConfig(
+        population_size=POPULATION_SIZE,
+        n_generations=N_GENERATIONS,
+        seed=SEED,
+        crossover_prob=0.7,
+        f_interval=(0.1, 1.9),
+    )
+    de_algo = DifferentialEvolution(
+        objective=objective, config=de_config, bounds=coeffs_bounds
+    )
+    de_algo.run(features_dummies.values, y)
+    return (de_algo,)
+
+
+@app.cell
+def _(de_algo):
+    de_algo.track_perf.plot()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Là encore, on constate une amélioration par rapport à une recherche purement aléatoire.
+    """)
     return
 
 
