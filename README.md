@@ -6,9 +6,11 @@ Notebook interactif [marimo](https://marimo.io) qui illustre comment utiliser de
 
 ## Contexte
 
-On cherche les coefficients d'une combinaison linéaire de variables qui maximise le **tau-b de Kendall** entre un score continu et une cible ordinale — typique d'un problème de scoring en risque de crédit.
+On cherche les coefficients d'une combinaison linéaire de variables qui maximise le **tau-b de Kendall** entre un score continu et une cible ordinale — typique d'un problème de scoring en risque de crédit où l'on souhaite obtenir un ranking pertinent. La fonction "objectif" n'est pas différentiable, ce qui motive l'utilisation d'algorithmes agnostiques.
 
-Les variables explicatives continues sont d'abord discrétisées (4 modalités chacune), puis encodées en dummies. L'espace de recherche est donc discret, ce qui motive l'usage d'algorithmes évolutionnaires plutôt que d'une optimisation par gradient.
+*Remarque : L'évolution différentielle n'utilise pas la différentiabilité, contrairement à ce que son nom pourrait laisser entendre. Mais la différence (-) entre deux combinaisons de paramètres intervient dans le processus d'évolution, d'où le nom.*
+
+Les variables explicatives continues sont d'abord discrétisées (4 modalités chacune), puis encodées en dummies. L'espace de recherche est donc discret.
 
 ## Algorithmes
 
