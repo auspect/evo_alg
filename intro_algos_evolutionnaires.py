@@ -1,12 +1,11 @@
-from dataclasses import field
-
 import marimo
 
 __generated_with = "0.20.1"
 app = marimo.App(
-    width="medium",
-    css_file="/usr/local/_marimo/custom.css",
-    auto_download=["html"],
+    width="full",
+    app_title="Introduction aux algos évolutionnaires",
+    css_file="",
+    auto_download=["html", "ipynb"],
 )
 
 
@@ -58,12 +57,12 @@ def _():
         TypeAlias,
         alt,
         dataclass,
+        field,
         kendalltau,
         mo,
         norm,
         np,
         pd,
-        field,
     )
 
 
@@ -195,6 +194,7 @@ def _(kendalltau, np):
         """
         return X @ w  # (n_obs, n_var=2), w=n_var(=2)
 
+
     def objective(
         w: np.ndarray, X: np.ndarray, y_true: np.ndarray, **kwargs
     ) -> float:
@@ -324,14 +324,12 @@ def _():
 
 
 @app.cell
-def _(BORNE_FINALE, BORNE_INITIALE, features_dummies):
+def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
     # Bornes pour les coefficients
-    from dataclasses import dataclass
-    from typing import TypeAlias
-
     bounds_type: TypeAlias = list[tuple[float, float]]
     infs_type: TypeAlias = list[float]
     sups_type: TypeAlias = list[float]
+
 
     @dataclass
     class Bound:
@@ -341,20 +339,17 @@ def _(BORNE_FINALE, BORNE_INITIALE, features_dummies):
         def as_tuple(self) -> tuple[float, float]:
             return (self.low, self.high)
 
+
     @dataclass
     class Bounds:
         bounds: list[Bound]
         _cache_as_list_of_tuples: list[tuple[float, float]] | None = None
-        _cache_as_list_inf_and_sup: tuple[list[float], list[float]] | None = (
-            None
-        )
+        _cache_as_list_inf_and_sup: tuple[list[float], list[float]] | None = None
 
         def as_list_of_tuples(self) -> bounds_type:
             """Convertir les bornes en liste de tuples"""
             if self._cache_as_list_of_tuples is None:
-                self._cache_as_list_of_tuples = [
-                    b.as_tuple() for b in self.bounds
-                ]
+                self._cache_as_list_of_tuples = [b.as_tuple() for b in self.bounds]
             return self._cache_as_list_of_tuples
 
         def as_list_inf_and_sup(self) -> tuple[infs_type, sups_type]:
@@ -367,6 +362,7 @@ def _(BORNE_FINALE, BORNE_INITIALE, features_dummies):
 
         def __len__(self) -> int:
             return len(self.bounds)
+
 
     coeffs_bounds = Bounds(
         bounds=[
@@ -389,9 +385,7 @@ def _(mo):
 
 
 @app.cell
-def _(alt, pd):
-    from dataclasses import dataclass
-
+def _(alt, dataclass, field, pd):
     @dataclass
     class PerformanceAlgoTracker:
         """Suivi de la performance d'un algo évolutionnaire"""
@@ -423,9 +417,7 @@ def _(alt, pd):
             """Tracer l'évolution des performances"""
             df_perf = pd.DataFrame(
                 {
-                    "Génération": list(
-                        range(1, len(self.avg_fitness_by_gen) + 1)
-                    ),
+                    "Génération": list(range(1, len(self.avg_fitness_by_gen) + 1)),
                     "Fitness moyen": self.avg_fitness_by_gen,
                     "Meilleure fitness": self.best_fitness_by_gen,
                 }
@@ -524,12 +516,10 @@ def _(Bounds, np):
             """Représentation de l'individu"""
             return f"Individual(w={self.w}, fitness={self.fitness})"
 
+
     # Population type alias (liste d'individus)
     Population = list[Individual]
-    return (
-        Individual,
-        Population,
-    )
+    return Individual, Population
 
 
 @app.cell(hide_code=True)
@@ -543,9 +533,16 @@ def _(mo):
 
 
 @app.cell
-def _(Bounds, Callable, Individual, PerformanceAlgoTracker, mo, np):
-    from dataclasses import dataclass
-
+def _(
+    Bounds,
+    Callable,
+    Individual,
+    PerformanceAlgoTracker,
+    Population,
+    dataclass,
+    mo,
+    np,
+):
     # La config
     @dataclass
     class EvolutionaryConfigTemplate:
@@ -554,6 +551,7 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, mo, np):
         population_size: int
         n_generations: int
         seed: int = 42
+
 
     # Le squelette de l'algo (ils ont tous la même structure de base, seule l'évolution diffère)
     class EvolutionaryTemplate:
@@ -576,7 +574,7 @@ def _(Bounds, Callable, Individual, PerformanceAlgoTracker, mo, np):
                 title=f"Performance de l'algorithme {self.__class__.__name__} au fil des générations"
             )
 
-        def init_pop(self) -> list[Individual]:
+        def init_pop(self) -> Population:
             """Initialiser la population"""
             population = [
                 Individual.random(
@@ -644,6 +642,7 @@ def _(
             # On remplace la population par une nouvelle population aléatoire
             self.population = self.init_pop()
 
+
     # Exemple d'utilisation
     baseline_config = EvolutionaryConfigTemplate(
         population_size=POPULATION_SIZE, n_generations=N_GENERATIONS, seed=SEED
@@ -700,6 +699,7 @@ def _(
         tournament_size: int = 3
         elites_size: int = 2
 
+
     class GeneticAlgorithm(EvolutionaryTemplate):
         """Implémentation simple d'un algorithme génétique"""
 
@@ -755,6 +755,7 @@ def _(
                 new_population.append(child)
             self.population = new_population
 
+
     genetic_config = GeneticAlgorithmConfig(
         population_size=POPULATION_SIZE,
         n_generations=N_GENERATIONS,
@@ -776,7 +777,7 @@ def _(genetic_algo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     On constate une amélioration au fil des générations (les générations passées servent à améliorer les générations suivantes)
@@ -820,6 +821,7 @@ def _(
             0.3,
             1.7,
         )
+
 
     class DifferentialEvolution(EvolutionaryTemplate):
         def create_candidat(
