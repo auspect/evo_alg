@@ -1,3 +1,5 @@
+from dataclasses import field
+
 import marimo
 
 __generated_with = "0.20.1"
@@ -46,12 +48,23 @@ def _():
     import numpy as np
     import pandas as pd
     from scipy.stats import kendalltau, norm
-    from dataclasses import dataclass
-    from typing import TypeAlias, Callable, TYPE_CHECKING
+    from dataclasses import dataclass, field
+    from typing import TypeAlias, Callable
 
     # Thème clair pour les graphiques Altair
     alt.theme.enable("googlecharts")
-    return Callable, TypeAlias, alt, dataclass, kendalltau, mo, norm, np, pd
+    return (
+        Callable,
+        TypeAlias,
+        alt,
+        dataclass,
+        kendalltau,
+        mo,
+        norm,
+        np,
+        pd,
+        field,
+    )
 
 
 @app.cell(hide_code=True)
@@ -311,14 +324,14 @@ def _():
 
 
 @app.cell
-def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
+def _(BORNE_FINALE, BORNE_INITIALE, features_dummies):
     # Bornes pour les coefficients
-    from typing import TYPE_CHECKING
+    from dataclasses import dataclass
+    from typing import TypeAlias
 
-    if TYPE_CHECKING:
-        bounds_type: TypeAlias = list[tuple[float, float]]
-        infs_type: TypeAlias = list[float]
-        sups_type: TypeAlias = list[float]
+    bounds_type: TypeAlias = list[tuple[float, float]]
+    infs_type: TypeAlias = list[float]
+    sups_type: TypeAlias = list[float]
 
     @dataclass
     class Bound:
@@ -331,8 +344,10 @@ def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
     @dataclass
     class Bounds:
         bounds: list[Bound]
-        _cache_as_list_of_tuples: list[tuple[float, float]] = None
-        _cache_as_list_inf_and_sup: tuple[list[float], list[float]] = None
+        _cache_as_list_of_tuples: list[tuple[float, float]] | None = None
+        _cache_as_list_inf_and_sup: tuple[list[float], list[float]] | None = (
+            None
+        )
 
         def as_list_of_tuples(self) -> bounds_type:
             """Convertir les bornes en liste de tuples"""
@@ -354,8 +369,8 @@ def _(BORNE_FINALE, BORNE_INITIALE, TypeAlias, dataclass, features_dummies):
             return len(self.bounds)
 
     coeffs_bounds = Bounds(
-        [
-            Bound(BORNE_INITIALE, BORNE_FINALE)
+        bounds=[
+            Bound(low=BORNE_INITIALE, high=BORNE_FINALE)
             for _ in range(features_dummies.shape[1])
         ]
     )
@@ -374,21 +389,19 @@ def _(mo):
 
 
 @app.cell
-def _(alt, dataclass, pd):
+def _(alt, pd):
+    from dataclasses import dataclass
+
     @dataclass
     class PerformanceAlgoTracker:
         """Suivi de la performance d'un algo évolutionnaire"""
 
         best_fitness: float = float("-inf")
-        avg_fitness_by_gen: list[float] = None
-        best_fitness_by_gen: list[float] = None
+        avg_fitness_by_gen: list[float] = field(default_factory=list)
+        best_fitness_by_gen: list[float] = field(default_factory=list)
         title: str = (
             "Performance de l'algorithme évolutionnaire au fil des générations"
         )
-
-        def __post_init__(self):
-            self.avg_fitness_by_gen = []
-            self.best_fitness_by_gen = []
 
         def update_best_fitness(self, best_fitness: float):
             """Mettre à jour la meilleure fitness"""
@@ -507,9 +520,16 @@ def _(Bounds, np):
             """Implémenter la rmultiplication entre 2 individus"""
             return self.__mul__(coeff)
 
+        def __repr__(self) -> str:
+            """Représentation de l'individu"""
+            return f"Individual(w={self.w}, fitness={self.fitness})"
+
     # Population type alias (liste d'individus)
     Population = list[Individual]
-    return (Individual,)
+    return (
+        Individual,
+        Population,
+    )
 
 
 @app.cell(hide_code=True)
@@ -523,7 +543,9 @@ def _(mo):
 
 
 @app.cell
-def _(Bounds, Callable, Individual, PerformanceAlgoTracker, dataclass, mo, np):
+def _(Bounds, Callable, Individual, PerformanceAlgoTracker, mo, np):
+    from dataclasses import dataclass
+
     # La config
     @dataclass
     class EvolutionaryConfigTemplate:
@@ -881,11 +903,6 @@ def _(mo):
     mo.md(r"""
     Là encore, on constate une amélioration par rapport à une recherche purement aléatoire.
     """)
-    return
-
-
-@app.cell
-def _():
     return
 
 
